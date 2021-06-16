@@ -1,4 +1,4 @@
-# spring-redis-publisher
+# spring-redis-messaging
 
 In Redis, publishers are not programmed to send their messages to specific subscribers. Rather, published messages are characterized into channels, without knowledge of what (if any) subscribers there may be.
 
