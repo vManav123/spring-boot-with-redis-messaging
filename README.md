@@ -13,36 +13,46 @@ First, we'll define a MessageListenerAdapter bean which contains a custom implem
 
 ```javascript
 @Bean
-MessageListenerAdapter messageListener() { 
-    return new MessageListenerAdapter(new RedisMessageSubscriber());
+public MessageListenerAdapter getMessageListenerAdapter()
+{
+   return new MessageListenerAdapter(new Receiver());
 }
 ```
 RedisMessageListenerContainer is a class provided by Spring Data Redis which provides asynchronous behavior for Redis message listeners. This is called internally and, according to the Spring Data Redis documentation – “handles the low level details of listening, converting and message dispatching.”
 
 ```javascript
 @Bean
-RedisMessageListenerContainer redisContainer() {
-    RedisMessageListenerContainer container 
-      = new RedisMessageListenerContainer(); 
-    container.setConnectionFactory(jedisConnectionFactory()); 
-    container.addMessageListener(messageListener(), topic()); 
-    return container; 
+public RedisMessageListenerContainer getRedisMessageListenerContainer()
+{
+   RedisMessageListenerContainer redisMessageListenerContainer = new RedisMessageListenerContainer();
+   redisMessageListenerContainer.setConnectionFactory(getRedisConnectionFactory());
+   redisMessageListenerContainer.addMessageListener(getMessageListenerAdapter(),getChannelTopic());
+   return redisMessageListenerContainer;
 }
 ```
 We will also create a bean using a custom-built MessagePublisher interface and a RedisMessagePublisher implementation. This way, we can have a generic message-publishing API, and have the Redis implementation take a redisTemplate and topic as constructor arguments:
 
 ```javascript
-@Bean
-MessagePublisher redisPublisher() { 
-    return new RedisMessagePublisher(redisTemplate(), topic());
+@Autowired
+private RedisTemplate redisTemplate;
+
+@Autowired
+private ChannelTopic channelTopic;
+
+@PostMapping(path = "/publisher")
+public String publish(@RequestBody Product product)
+{
+    redisTemplate.convertAndSend(channelTopic.getTopic(),product.toString());
+    return "Event Published !!!";
 }
 ```
 Finally, we'll set up a topic to which the publisher will send messages, and the subscriber will receive them:
 
 ```javascript
 @Bean
-ChannelTopic topic() {
-    return new ChannelTopic("messageQueue");
+public ChannelTopic getChannelTopic()
+{
+    return new ChannelTopic("manav-verma-publisher");
 }
 ```
 ## Publishing Messages
